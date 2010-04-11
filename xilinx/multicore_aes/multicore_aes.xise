@@ -38,7 +38,6 @@
   </files>
 
   <properties>
-    <property xil_pn:name="Auto Implementation Top" xil_pn:value="false"/>
     <property xil_pn:name="Constraints Entry" xil_pn:value="Constraints Editor"/>
     <property xil_pn:name="Device" xil_pn:value="xc3s50a"/>
     <property xil_pn:name="Device Family" xil_pn:value="Spartan3A and Spartan3AN"/>
