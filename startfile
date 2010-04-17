@@ -1,0 +1,11 @@
+echo Make sure you are using a bash shell before sourcing this file.
+echo You can type, bash, if you are not
+echo I recommend setting bash as your default shell
+
+source /remote/Xilinx/ISE/settings32.sh
+source /remote/Xilinx/EDK/settings32.sh
+export PATH=$PATH:/remote/Modelsim/modeltech/bin
+export XILINX=/remote/Xilinx
+export LM_LICENSE_FILE=1717@io.ece.iastate.edu
+export BASE_DIR=`pwd`
+#/remote/Modelsim/modeltech/linux/vsim
