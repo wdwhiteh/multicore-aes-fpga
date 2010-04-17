@@ -1,0 +1,9 @@
+#!/bin/csh
+rm -rf work
+vlib work
+vcom -work work $BASE_DIR/src/dsn/aes_pkg.vhdl
+vcom -work work $BASE_DIR/src/dsn/key_expansion.vhdl
+vcom -work work $BASE_DIR/src/dsn/aes_enc.vhdl
+vcom -work work $BASE_DIR/src/dsn/aes_dec.vhdl
+vcom -work work $BASE_DIR/src/dsn/aes_top.vhd
+vlog -work work $BASE_DIR/src/tb/aes_top_tb.sv

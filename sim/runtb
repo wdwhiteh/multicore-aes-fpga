@@ -1,0 +1,2 @@
+#!/bin/csh
+vsim -novopt -gui aes_top_tb -do "do wave.do; log -r /*; run -a"
