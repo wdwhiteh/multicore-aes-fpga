@@ -37,12 +37,13 @@ library WORK;
 use WORK.aes_pkg.ALL;
 
 entity aes_enc is
-   generic
-                  (
-                  KEY_SIZE             :  in    integer range 0 to 2 := 0            -- 0-128; 1-192; 2-256
-                  );
    port
+   --generic
                   (
+                  KEY_SIZE             :  in    integer range 0 to 2 := 0;            -- 0-128; 1-192; 2-256
+   --               );
+   --port
+   --               (
                   DATA_I               :  in    std_logic_vector(7 downto 0);
                   VALID_DATA_I         :  in    std_logic;
                   KEY_I                :  in    std_logic_vector(7 downto 0);
@@ -108,11 +109,11 @@ i_MAX_ROUND <= 8     when  KEY_SIZE = 0 else
 
 KEXP0:
    key_expansion
-      GENERIC MAP
-                  (
-                  KEY_SIZE             => KEY_SIZE
-                  )
+--      GENERIC MAP
+--                  (
+--                  )
       PORT MAP    (
+                  KEY_SIZE             => KEY_SIZE,
                   KEY_I                => KEY_I,
                   VALID_KEY_I          => VALID_KEY_I,
 
