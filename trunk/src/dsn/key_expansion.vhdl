@@ -30,11 +30,12 @@ library WORK;
 use WORK.aes_pkg.ALL;
 
 entity key_expansion is
-   generic        (
-                  KEY_SIZE             :  in    integer range 0 to 2 := 2
-                  );
-   port
-                  (
+   port(
+   --generic        (
+                  KEY_SIZE             :  in    integer range 0 to 2 := 2;
+   --               );
+   --port
+   --               (
                   KEY_I                :  in    std_logic_vector(7 downto 0);
                   VALID_KEY_I          :  in    std_logic;
 
@@ -185,7 +186,7 @@ SRAM0:
          elsif CE_I = '1' then
             if FF_VALID_KEY = '0' and VALID_KEY_I = '1' then
                i_SRAM_ADDR_WR0 <= 0;
-            elsif SRAM_WREN0 = '1' then
+            elsif SRAM_WREN0 = '1' and not(i_SRAM_ADDR_WR0 = 63) then
                i_SRAM_ADDR_WR0 <= i_SRAM_ADDR_WR0 + 1;
             end if;
          end if;

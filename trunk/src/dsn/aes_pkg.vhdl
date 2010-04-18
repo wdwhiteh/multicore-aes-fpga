@@ -71,11 +71,11 @@ package aes_pkg is
    constant c_RCON             : type_RCON :=  (x"01", x"02", x"04", x"08", x"10", x"20", x"40", x"80", x"1B", x"36");
 
 	COMPONENT key_expansion
-   GENERIC
-      (
-      KEY_SIZE             :  in    integer range 0 to 2 := 0
-      );
+   --GENERIC
+   --   (
+   --   );
 	PORT(
+      		KEY_SIZE             :  in    integer range 0 to 2 := 0;
 		KEY_I : IN std_logic_vector(7 downto 0);
 		VALID_KEY_I : IN std_logic;
 		CLK_I : IN std_logic;
