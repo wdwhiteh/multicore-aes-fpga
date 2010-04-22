@@ -31,11 +31,7 @@ use WORK.aes_pkg.ALL;
 
 entity key_expansion is
    port(
-   --generic        (
                   KEY_SIZE             :  in    integer range 0 to 2 := 2;
-   --               );
-   --port
-   --               (
                   KEY_I                :  in    std_logic_vector(7 downto 0);
                   VALID_KEY_I          :  in    std_logic;
 
