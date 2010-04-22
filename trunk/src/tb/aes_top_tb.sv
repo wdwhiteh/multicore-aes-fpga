@@ -44,6 +44,9 @@ reg[4:0] dec_input_num, dec_output_num = 0;
 reg[31:0][127:0] dec_input_data;
 reg[127:0] dec_out;
 
+int check_dec_running = 0;
+int errors = 0;
+
 aes_top dut (
 	.CLK_I(clk),
 	.RESET_I(reset),
@@ -97,6 +100,51 @@ initial begin
 end	
 
 task run_test();
+  mult_test(128, 20);
+  mult_test(192, 20);
+  mult_test(256, 20);
+
+  if( errors > 0 ) $display("TESTCASE: FAILED - Errors = %0d", errors);
+  else $display("TESTCASE: PASSED");
+endtask
+task mult_test(int size, int num);
+  setup_key(size);
+  fork
+    check_dec();
+    run_enc(num);
+    run_dec(num);
+  join_none
+  repeat(num) @(negedge dec_valid_o);
+  //#2us;
+endtask
+
+task run_enc(int num_enc = 20);
+  repeat(num_enc) enc_data();
+endtask
+
+task run_dec(int num_dec);
+  repeat(num_dec) begin
+    @(got_new_enc_out);
+    dec_data(enc_out);
+  end
+endtask
+
+task check_dec();
+  if( check_dec_running ) return;
+  check_dec_running = 1;
+  forever begin
+    @(got_new_dec_out);
+    //verify dec out equals enc in
+    if( enc_input_data[dec_output_num] != dec_out ) begin
+      $display("%0d - FAIL: Enc input %32h does not equal Dec output %32h.", $time, enc_input_data[dec_output_num], dec_out);
+      errors++;
+    end
+    else
+      $display("%0d - PASS: Enc input %32h equals Dec output %32h.", $time, enc_input_data[dec_output_num], dec_out);
+  end
+endtask
+
+task key_test();
   test_enc_dec(128);  
   test_enc_dec();  
   test_enc_dec();  
@@ -139,12 +187,13 @@ task setup_key(int size = 128, logic[255:0] key = 'X);
 		@(negedge clk);
 	end
 	l_key_valid <= 0;	
+	$display("%0d - %0d bit key:  %0h", $time, key_size_int, key_data);
 	@(negedge clk);
 endtask
 
 task enc_data(logic[255:0] data = 'X);
 	wait( enc_ready == 1 );
-	repeat(5)@(negedge clk);
+	repeat(1)@(negedge clk);
 	l_enc_valid_i <= 1;
 	for( int i=1; i<=16; i++ ) begin		
 		l_enc_data_i = (^data === 'X) ? $random() : data[i*8-1 -: 8];
@@ -176,9 +225,7 @@ task monitor_enc_out();
 			enc_out[i*8-1 -: 8] = enc_data_o;
 		end
 		-> got_new_enc_out;
-		$display("%0d - %0d bit key:  %0h", $time, key_size_int, key_data);
-		$display("Enc Data Input:  %32h", enc_input_data[enc_output_num++]);
-		$display("Enc Data Output: %32h", enc_out);
+		$display("Enc Data Input:  %32h Output: %32h", enc_input_data[enc_output_num++], enc_out);
 		@(posedge clk);
 	end
 endtask
@@ -191,9 +238,7 @@ task monitor_dec_out();
 			@(posedge clk);
 			dec_out[i*8-1 -: 8] = dec_data_o;
 		end
-		$display("%0d - %0d bit key:  %0h", $time, key_size_int, key_data);
-		$display("Dec Data Input:  %32h", dec_input_data[dec_output_num]);
-		$display("Dec Data Output: %32h", dec_out);
+		$display("Dec Data Input:  %32h Output: %32h", dec_input_data[dec_output_num], dec_out);
 		-> got_new_dec_out;
 		@(posedge clk);
 		dec_output_num++;
