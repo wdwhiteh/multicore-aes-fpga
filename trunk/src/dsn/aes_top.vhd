@@ -20,6 +20,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
+--use IEEE.NUMERIC_STD.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 library WORK;
@@ -55,10 +56,7 @@ end aes_top;
 architecture Behavioral of aes_top is
 	
 	component aes_enc
-	 --generic
-         --         (
-         --         );
-   port
+   	port
                   (
                   KEY_SIZE             :  in    integer range 0 to 2 := 0;            -- 0-128; 1-192; 2-256
                   DATA_I               :  in    std_logic_vector(7 downto 0);
@@ -78,10 +76,7 @@ architecture Behavioral of aes_top is
 	end component;
 	
 	component aes_dec is
-   --generic
-   --               (
-   --               );
-   port
+   	port
                   (
                   KEY_SIZE             :  in    integer range 0 to 2 := 2;            -- 0-128; 1-192; 2-256
                   DATA_I               :  in    std_logic_vector(7 downto 0);
@@ -101,8 +96,8 @@ architecture Behavioral of aes_top is
 	end component;
 	
 
-	constant	NUM_ENC : integer := 2;
-	constant	NUM_DEC : integer := 1;
+	constant	NUM_ENC : integer := 11;
+	constant	NUM_DEC : integer := 11;
 
 	
 	
@@ -110,6 +105,7 @@ architecture Behavioral of aes_top is
 	type		enc_bit_array is array (NUM_ENC-1 downto 0) of std_logic;
 	type		dec_byte_array is array (NUM_DEC-1 downto 0) of std_logic_vector(7 downto 0);
 	type		dec_bit_array is array (NUM_DEC-1 downto 0) of std_logic;
+	type		byte_shifter is array (1 downto 0) of std_logic_vector(7 downto 0);
 	
 	signal	i_KEY_SIZE : integer range 0 to 2;
 	
@@ -125,7 +121,7 @@ architecture Behavioral of aes_top is
 	signal 	cur_enc_in : integer range 0 to NUM_ENC-1;
 	signal 	cur_enc_out : integer range 0 to NUM_ENC-1;
 	signal	last_ENC_VALID_I : std_logic_vector(1 downto 0);
-	signal	last_ENC_DATA_I : std_logic_vector(7 downto 0);
+	signal	last_ENC_DATA_I : byte_shifter;
 	signal	n_got_new_enc, got_new_enc : std_logic;
 	
 	
@@ -141,7 +137,7 @@ architecture Behavioral of aes_top is
 	signal	cur_dec_in : integer range 0 to NUM_DEC-1;
 	signal	cur_dec_out : integer range 0 to NUM_DEC-1;
 	signal	last_DEC_VALID_I : std_logic_vector(1 downto 0);
-	signal	last_DEC_DATA_I : std_logic_vector(7 downto 0);
+	signal	last_DEC_DATA_I : byte_shifter;
 	signal	n_got_new_dec, got_new_dec : std_logic;
 
 begin	
@@ -149,8 +145,6 @@ begin
 	EncGen : for k in NUM_ENC - 1 downto 0 generate
 	begin
 		enc_gen: aes_enc
-			--generic map (
-			--	)
 			port map	(
 				KEY_SIZE	=> i_KEY_SIZE,
 				DATA_I => enc_data_in(k),
@@ -169,8 +163,6 @@ begin
 	DecGen : for k in NUM_DEC - 1 downto 0 generate
 	begin
 		dec_gen: aes_dec
-			--generic map (
-			--	)
 			port map	(
 				KEY_SIZE	=> i_KEY_SIZE,
 				DATA_I => dec_data_in(k),
@@ -193,45 +185,42 @@ begin
 			dec_check <= (others => '1');
 			
 			enc_busy <= (others => '0');
-			--n_enc_busy <= (others => '0');
 			got_new_enc <= '0';
 			last_ENC_VALID_I <= (others => '0');
-			last_ENC_DATA_I <= (others => '0');
+			last_ENC_DATA_I <= (others => (others => '0'));
 			
 			dec_busy <= (others => '0');
-			--n_dec_busy <= (others => '0');
 			got_new_dec <= '0';
-			--n_got_new_dec <= '0';
 			last_DEC_VALID_I <= (others => '0');
-			last_DEC_DATA_I <= (others => '0');
+			last_DEC_DATA_I <= (others => (others => '0'));
 		elsif rising_edge(CLK_I) then
 			enc_busy <= n_enc_busy;
 			got_new_enc <= n_got_new_enc;			
 			last_ENC_VALID_I <= last_ENC_VALID_I(0) & ENC_VALID_I;
-			last_ENC_DATA_I <= ENC_DATA_I;
+			last_ENC_DATA_I <= last_ENC_DATA_I(0) & ENC_DATA_I;
 			last_enc_valid_out <= enc_valid_out;
 			
 			dec_busy <= n_dec_busy;
 			got_new_dec <= n_got_new_dec;			
 			last_DEC_VALID_I <= last_DEC_VALID_I(0) & DEC_VALID_I;
-			last_DEC_DATA_I <= DEC_DATA_I;
+			last_DEC_DATA_I <= last_DEC_DATA_I(0) & DEC_DATA_I;
 			last_dec_valid_out <= dec_valid_out;
 		end if;
 	end process;
 		
 	
 	i_KEY_SIZE <= 	0 when KEY_SIZE_I = "00" else
-						1 when KEY_SIZE_I = "01" else
-						2;
+			1 when KEY_SIZE_I = "01" else
+			2;
 						
 	ENC_READY_O <= '1' when (enc_key_ready = enc_check and not(enc_busy = enc_check)) 
 						else '0';
 	DEC_READY_O <= '1' when (dec_key_ready = dec_check and not(dec_busy = dec_check)) 
 						else '0';
-	ENC_DATA_O <= enc_data_out(cur_enc_in);
+	ENC_DATA_O <= enc_data_out(cur_enc_out);
 	ENC_VALID_O <= enc_valid_out(cur_enc_out);
 	
-	DEC_DATA_O <= dec_data_out(cur_dec_in);
+	DEC_DATA_O <= dec_data_out(cur_dec_out);
 	DEC_VALID_O <= dec_valid_out(cur_dec_out);
 
 
@@ -239,48 +228,70 @@ begin
 	
 	EncInGen : for k in NUM_ENC - 1 downto 0 generate
 	begin
-		enc_data_in(k) <= last_ENC_DATA_I when k = cur_enc_in else (others => '0');
-		enc_valid_in(k) <= last_ENC_VALID_I(0) when k = cur_enc_in else '0';
+		enc_data_in(k) <= last_ENC_DATA_I(1) when k = cur_enc_in else (others => '0');
+		enc_valid_in(k) <= last_ENC_VALID_I(1) when k = cur_enc_in else '0';		
+		dec_data_in(k) <= last_DEC_DATA_I(1) when k = cur_dec_in else (others => '0');
+		dec_valid_in(k) <= last_DEC_VALID_I(1) when k = cur_dec_in else '0';		
 	end generate;
 	
 	enc_process : process (enc_busy, got_new_enc, enc_valid_out, last_enc_valid_out)
 	begin
-		--BusyGen : for k in NUM_ENC - 1 downto 0 generate
-		--begin			
-		
-		if( enc_busy(0) = '0' and got_new_enc = '1' ) then				
-			n_enc_busy(0) <= '1';
-			cur_enc_in <= 0;				
-		elsif( enc_valid_out(0) = '0' and last_enc_valid_out(0) = '1' ) then
-			n_enc_busy(0) <= '0';
-		else
-			n_enc_busy(0) <= enc_busy(0);
-		end if;					
-		--end generate;
+		for k in 0 to NUM_ENC-1 loop 	
+			if( k = 0 ) then
+				if( enc_busy(k) = '0' and got_new_enc = '1' ) then				
+					n_enc_busy(k) <= '1';
+					cur_enc_in <= 0;				
+				elsif( enc_valid_out(k) = '0' and last_enc_valid_out(k) = '1' ) then
+					n_enc_busy(k) <= '0';
+				else
+					n_enc_busy(k) <= enc_busy(k);
+				end if;	
+			else
+				if( enc_busy(k downto 0) = '0' & enc_check(k-1 downto 0) and got_new_enc = '1' ) then		
+					n_enc_busy(k) <= '1';
+					cur_enc_in <= k;				
+				elsif( enc_valid_out(k) = '0' and last_enc_valid_out(k) = '1' ) then
+					n_enc_busy(k) <= '0';
+				else
+					n_enc_busy(k) <= enc_busy(k);
+				end if;					
+			end if;
+
+			if( enc_valid_out(k) = '1' ) then
+				cur_enc_out <= k;
+			end if;
+		end loop;
 	end process;
 	
 	n_got_new_dec <= '1' when last_DEC_VALID_I = "01" else '0';
 	
-	DecInGen : for k in NUM_DEC - 1 downto 0 generate
-	begin
-		dec_data_in(k) <= last_DEC_DATA_I when k = cur_dec_in else (others => '0');
-		dec_valid_in(k) <= last_DEC_VALID_I(0) when k = cur_dec_in else '0';
-	end generate;
-	
 	dec_process : process (dec_busy, got_new_dec, dec_valid_out, last_dec_valid_out)
 	begin
-		--BusyGen : for k in NUM_DEC - 1 downto 0 generate
-		--begin			
-		
-		if( dec_busy(0) = '0' and got_new_dec = '1' ) then				
-			n_dec_busy(0) <= '1';
-			cur_dec_in <= 0;				
-		elsif( dec_valid_out(0) = '0' and last_dec_valid_out(0) = '1' ) then
-			n_dec_busy(0) <= '0';
-		else
-			n_dec_busy(0) <= dec_busy(0);
-		end if;					
-		--end generate;
+		for k in 0 to NUM_DEC-1 loop 	
+			if( k = 0 ) then
+				if( dec_busy(k) = '0' and got_new_dec = '1' ) then				
+					n_dec_busy(k) <= '1';
+					cur_dec_in <= 0;				
+				elsif( dec_valid_out(k) = '0' and last_dec_valid_out(k) = '1' ) then
+					n_dec_busy(k) <= '0';
+				else
+					n_dec_busy(k) <= dec_busy(k);
+				end if;	
+			else
+				if( dec_busy(k downto 0) = '0' & dec_check(k-1 downto 0) and got_new_dec = '1' ) then		
+					n_dec_busy(k) <= '1';
+					cur_dec_in <= k;				
+				elsif( dec_valid_out(k) = '0' and last_dec_valid_out(k) = '1' ) then
+					n_dec_busy(k) <= '0';
+				else
+					n_dec_busy(k) <= dec_busy(k);
+				end if;					
+			end if;
+
+			if( dec_valid_out(k) = '1' ) then
+				cur_dec_out <= k;
+			end if;
+		end loop;
 	end process;
 end Behavioral;
 
