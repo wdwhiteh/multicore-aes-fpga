@@ -234,7 +234,7 @@ begin
 		dec_valid_in(k) <= last_DEC_VALID_I(1) when k = cur_dec_in else '0';		
 	end generate;
 	
-	enc_process : process (enc_busy, got_new_enc, enc_valid_out, last_enc_valid_out)
+	enc_process : process (enc_busy, got_new_enc, enc_valid_out, last_enc_valid_out, enc_check)
 	begin
 		for k in 0 to NUM_ENC-1 loop 	
 			if( k = 0 ) then
@@ -265,7 +265,7 @@ begin
 	
 	n_got_new_dec <= '1' when last_DEC_VALID_I = "01" else '0';
 	
-	dec_process : process (dec_busy, got_new_dec, dec_valid_out, last_dec_valid_out)
+	dec_process : process (dec_busy, got_new_dec, dec_valid_out, last_dec_valid_out, dec_check)
 	begin
 		for k in 0 to NUM_DEC-1 loop 	
 			if( k = 0 ) then
