@@ -1,5 +1,5 @@
-`timescale 1ns/1ps
-`define CLK_PERIOD 20
+`timescale 1ps/1ps
+`define CLK_PERIOD 3362
 
 module aes_top_tb;
 
@@ -80,9 +80,9 @@ initial begin
 	enc_output_num = 0;
 	dec_input_num = 0;
 	dec_output_num = 0;
-	#100;
+	repeat(5) #(`CLK_PERIOD);
 	l_reset <= 0;
-	#200;
+	repeat(10) #(`CLK_PERIOD);
 	fork
 		monitor_enc_out();
 		monitor_dec_out();
@@ -115,7 +115,6 @@ task mult_test(int size, int num);
     run_dec(num);
   join_none
   repeat(num) @(negedge dec_valid_o);
-  //#2us;
 endtask
 
 task run_enc(int num_enc = 20);
@@ -158,7 +157,7 @@ endtask
 
 task test_enc_dec( int size  = 0);
   if( size != 0 )begin
-    #100ns;
+    repeat(5) #(`CLK_PERIOD);
     setup_key(size);
   end
   enc_data();
