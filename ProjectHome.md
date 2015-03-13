@@ -1,0 +1,1 @@
+FPGA design that has multiple AES encryption and decryption cores that can select between 128, 192, and 256 bit key sizes. The purpose is to have high encryption/decryption throughput with the use of multiple AES cores.
